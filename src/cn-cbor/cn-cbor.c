@@ -182,6 +182,7 @@ again:
 #ifndef CBOR_NO_FLOAT
       cb->type = CN_CBOR_DOUBLE;
       cb->v.dbl = decode_half(val);
+      cb->length = 2;
 #else /*  CBOR_NO_FLOAT */
       CN_CBOR_FAIL(CN_CBOR_ERR_FLOAT_NOT_SUPPORTED);
 #endif /*  CBOR_NO_FLOAT */
@@ -191,6 +192,7 @@ again:
       cb->type = CN_CBOR_DOUBLE;
       u32.u = val;
       cb->v.dbl = u32.f;
+      cb->length = 4;
 #else /*  CBOR_NO_FLOAT */
       CN_CBOR_FAIL(CN_CBOR_ERR_FLOAT_NOT_SUPPORTED);
 #endif /*  CBOR_NO_FLOAT */
@@ -200,6 +202,7 @@ again:
       cb->type = CN_CBOR_DOUBLE;
       u64.u = val;
       cb->v.dbl = u64.d;
+      cb->length = 8;
 #else /*  CBOR_NO_FLOAT */
       CN_CBOR_FAIL(CN_CBOR_ERR_FLOAT_NOT_SUPPORTED);
 #endif /*  CBOR_NO_FLOAT */

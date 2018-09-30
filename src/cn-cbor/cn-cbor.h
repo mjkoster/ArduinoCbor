@@ -7,6 +7,10 @@
 #ifndef CN_CBOR_H
 #define CN_CBOR_H
 
+#define ntohl(x) __builtin_bswap32((uint32_t) (x))
+#define ntohs(x) __builtin_bswap16((uint16_t) (x))
+
+
 #ifdef  __cplusplus
 extern "C" {
 #endif

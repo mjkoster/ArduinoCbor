@@ -1,5 +1,9 @@
 #include "CborVariant.h"
 
+#ifdef FLOAT_T_32
+#include <IEEE754tools.h>
+#endif
+
 CborVariant::CborVariant(CborBuffer& buffer, cn_cbor* raw) : buffer(buffer) {
   this->raw = raw;
 }
@@ -14,6 +18,13 @@ CborVariant::CborVariant(CborBuffer& buffer, CBOR_INT_T value) : buffer(buffer) 
   cn_cbor_errback err;
 
   raw = cn_cbor_int_create(value, &buffer.context, &err);
+}
+
+CborVariant::CborVariant(CborBuffer& buffer, CBOR_FLOAT_T value) : buffer(buffer) {
+  cn_cbor_errback err;
+
+  // There is not a double create in cn_cbor...
+  // raw = cn_cbor_int_create(value, &buffer.context, &err);
 }
 
 CborVariant::CborVariant(CborBuffer& buffer, CborObject& value) : buffer(buffer) {
@@ -44,6 +55,9 @@ bool CborVariant::isInteger() {
   return isValid() && raw->type == CN_CBOR_UINT || raw->type == CN_CBOR_INT;
 }
 
+bool CborVariant::isFloat() {
+  return isValid() && raw->type == CN_CBOR_DOUBLE;
+}
 bool CborVariant::isObject() {
   return isValid() && raw->type == CN_CBOR_MAP;
 }
@@ -63,7 +77,7 @@ const char* CborVariant::asString() {
 
   if (raw->v.str[raw->length] != 0) {
     char* tmp = (char*)buffer.alloc(raw->length + 1);
-    
+
     for (int i = 0; i < raw->length; i++) {
       tmp[i] = raw->v.str[i];
     }
@@ -90,6 +104,23 @@ CBOR_INT_T CborVariant::asInteger() {
   return 0;
 }
 
+CBOR_FLOAT_T CborVariant::asFloat() {
+  if (!isValid()) {
+    return 0;
+  }
+  if (raw->type == CN_CBOR_DOUBLE ) {
+    #ifdef FLOAT_T_32
+    union _DBLCONV dbl;
+    if ( 8 == raw->length ) {
+      dbl.d = raw->v.dbl;
+      raw->v.dbl = doublePacked2Float(dbl.b);
+    }
+    #endif
+    return raw->v.dbl;
+  }
+
+  return 0;
+}
 CborObject CborVariant::asObject() {
   if (isObject()) {
     return CborObject(buffer, raw);
