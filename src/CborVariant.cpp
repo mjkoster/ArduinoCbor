@@ -24,7 +24,21 @@ CborVariant::CborVariant(CborBuffer& buffer, CBOR_FLOAT_T value) : buffer(buffer
   cn_cbor_errback err;
 
   // There is not a double create in cn_cbor...
-  // raw = cn_cbor_int_create(value, &buffer.context, &err);
+  // raw = cn_cbor_idouble_create(value, &buffer.context, &err);
+}
+
+CborVariant::CborVariant(CborBuffer& buffer, CBOR_BOOLEAN_T value) : buffer(buffer) {
+  cn_cbor_errback err;
+
+  // There is not a boolean create in cn_cbor...
+  // raw = cn_cbor_boolean_create(value, &buffer.context, &err);
+}
+
+CborVariant::CborVariant(CborBuffer& buffer, CBOR_NULL_T value) : buffer(buffer) {
+  cn_cbor_errback err;
+
+  // There is not a null create in cn_cbor...
+  // raw = cn_cbor_null_create(value, &buffer.context, &err);
 }
 
 CborVariant::CborVariant(CborBuffer& buffer, CborObject& value) : buffer(buffer) {
@@ -58,6 +72,15 @@ bool CborVariant::isInteger() {
 bool CborVariant::isFloat() {
   return isValid() && raw->type == CN_CBOR_DOUBLE;
 }
+
+bool CborVariant::isBoolean() {
+  return isValid() && ( raw->type == CN_CBOR_TRUE || raw->type == CN_CBOR_FALSE );
+}
+
+bool CborVariant::isNull() {
+  return isValid() && raw->type == CN_CBOR_NULL;
+}
+
 bool CborVariant::isObject() {
   return isValid() && raw->type == CN_CBOR_MAP;
 }
@@ -110,6 +133,8 @@ CBOR_FLOAT_T CborVariant::asFloat() {
   }
   if (raw->type == CN_CBOR_DOUBLE ) {
     #ifdef FLOAT_T_32
+    // Use the IEEE754 routine to round the 64 bit double down to 32 bits
+    // returns NAN if the 64 bit float is too big !fixme handle the NAN case
     union _DBLCONV dbl;
     if ( 8 == raw->length ) {
       dbl.d = raw->v.dbl;
@@ -121,6 +146,24 @@ CBOR_FLOAT_T CborVariant::asFloat() {
 
   return 0;
 }
+
+CBOR_BOOLEAN_T CborVariant::asBoolean() {
+  if (!isValid()) {
+    return 0; // in C/C++ isValid() should be tested before using the boolean
+  }
+
+  if (raw->type == CN_CBOR_TRUE) {
+    return 1;
+  }
+
+  if (raw->type == CN_CBOR_FALSE) {
+    return 0;
+  }
+
+  return 0;
+}
+
+
 CborObject CborVariant::asObject() {
   if (isObject()) {
     return CborObject(buffer, raw);
